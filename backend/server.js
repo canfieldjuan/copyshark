@@ -4,53 +4,17 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// Conditionally load Stripe only if needed
-let stripe;
-if (process.env.STRIPE_SECRET_KEY) {
-    try {
-        stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    } catch (err) {
-        console.warn('Stripe not available:', err.message);
-    }
-}
-
-// Conditionally load your custom modules
-let llmService, db, frameworks, niches;
-try {
-    llmService = require('./services/llmService');
-} catch (err) {
-    console.warn('LLM Service not available:', err.message);
-}
-
-try {
-    db = require('./database');
-} catch (err) {
-    console.warn('Database module not available:', err.message);
-}
-
-try {
-    frameworks = require('./data/frameworks');
-} catch (err) {
-    console.warn('Frameworks data not available:', err.message);
-    frameworks = {};
-}
-
-try {
-    niches = require('./data/niches');
-} catch (err) {
-    console.warn('Niches data not available:', err.message);
-    niches = {};
-}
+const llmService = require('./services/llmService');
+const db = require('./database');
+const frameworks = require('./data/frameworks');
+const niches = require('./data/niches');
 
 const app = express();
 
 // Stripe webhook needs the raw body, so we define it before express.json()
 app.post('/api/payments/webhook', express.raw({type: 'application/json'}), async (req, res) => {
-    if (!stripe) {
-        return res.status(503).send('Payment service not available');
-    }
-    
     const sig = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
     let event;
@@ -67,9 +31,7 @@ app.post('/api/payments/webhook', express.raw({type: 'application/json'}), async
         if (!userId) {
             return res.status(400).send('Webhook Error: Missing userId in session metadata.');
         }
-        if (db) {
-            await db.updateUserPlan(userId, 'pro');
-        }
+        await db.updateUserPlan(userId, 'pro');
     }
     res.status(200).send();
 });
@@ -126,28 +88,9 @@ function authenticateAIPortal(req, res, next) {
     next();
 }
 
-// Test endpoint
-app.get('/api/health', (req, res) => {
-    res.json({ 
-        success: true, 
-        service: 'CopyShark', 
-        status: 'online',
-        timestamp: new Date().toISOString(),
-        available_functions: [
-            'generateAdCopy',
-            'getFrameworks', 
-            'getNiches',
-            'getUserUsage'
-        ]
-    });
-});
-
-// Authentication endpoints
+// Original authentication endpoints
 app.post('/api/auth/register', async (req, res) => {
     try {
-        if (!db) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
         const { email, password } = req.body;
         if (!email || !password) return res.status(400).json({ error: 'Email and password required.' });
         const user = await db.createUser(email, password);
@@ -159,9 +102,6 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
     try {
-        if (!db) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
         const { email, password } = req.body;
         const user = await db.findUserByEmail(email);
         if (!user || !(await bcrypt.compare(password, user.password_hash))) {
@@ -174,51 +114,8 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Public endpoints
-app.get('/api/frameworks', (req, res) => res.json(frameworks || {}));
-app.get('/api/niches', (req, res) => res.json(niches || {}));
-
-// Enhanced copy generation with AI Portal support
-app.post('/api/generate-copy', authenticateToken, async (req, res) => {
-    try {
-        if (!llmService) {
-            return res.status(503).json({ error: 'AI service not available' });
-        }
-        
-        const { productName, audience, niche, framework, tone } = req.body;
-        const userId = req.user.userId;
-        
-        // Skip usage limits for AI Portal requests
-        if (!req.user.isAIPortal && db) {
-            const user = await db.getUser(userId);
-            if (user.plan === 'free' && user.usage_count >= LIMITS.free) {
-                return res.status(403).json({ error: 'Usage limit reached.', requiresUpgrade: true });
-            }
-        }
-        
-        const prompt = `You are an expert copywriter. Generate ad copy. Product: "${productName}", Audience: "${audience}", Niche: "${niches[niche]?.name || niche}", Framework: "${frameworks[framework]?.name || framework}", Tone: "${tone}". Output ONLY a raw JSON object with keys: "headline", "body", "cta".`;
-        
-        const generatedCopy = await llmService.generate(prompt);
-        
-        // Only increment usage for non-AI Portal requests
-        if (!req.user.isAIPortal && db) {
-            await db.incrementUserUsage(req.user.userId);
-        }
-        
-        res.json({ success: true, copy: generatedCopy });
-    } catch (error) {
-        console.error('Copy generation error:', error);
-        res.status(500).json({ success: false, error: 'AI service failed.' });
-    }
-});
-
-// Payment endpoint
 app.post('/api/payments/create-checkout-session', authenticateToken, async (req, res) => {
     try {
-        if (!stripe) {
-            return res.status(503).json({ error: 'Payment service not available' });
-        }
-        
         const userId = req.user.userId;
         const session = await stripe.checkout.sessions.create({
             line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
@@ -234,57 +131,57 @@ app.post('/api/payments/create-checkout-session', authenticateToken, async (req,
     }
 });
 
-// User info endpoint
-app.get('/api/user/me', authenticateToken, async (req, res) => {
+// Enhanced copy generation with AI Portal support
+app.post('/api/generate-copy', async (req, res) => {
     try {
-        if (req.user.isAIPortal) {
-            return res.json({ 
-                success: true, 
-                email: 'ai-portal@system', 
-                plan: 'unlimited', 
-                usage: 0 
-            });
+        const { productName, audience, niche, framework, tone } = req.body;
+        const userId = req.user.userId;
+        
+        // Skip usage limits for AI Portal requests
+        if (!req.user.isAIPortal) {
+            const user = await db.getUser(userId);
+            if (user.plan === 'free' && user.usage_count >= LIMITS.free) {
+                return res.status(403).json({ error: 'Usage limit reached.', requiresUpgrade: true });
+            }
         }
         
-        if (!db) {
-            return res.status(503).json({ error: 'Database not available' });
+        const prompt = `You are an expert copywriter. Generate ad copy. Product: "${productName}", Audience: "${audience}", Niche: "${niches[niche]?.name || niche}", Framework: "${frameworks[framework]?.name || framework}", Tone: "${tone}". Output ONLY a raw JSON object with keys: "headline", "body", "cta".`;
+        
+        const generatedCopy = await llmService.generate(prompt);
+        
+        // Only increment usage for non-AI Portal requests
+        if (!req.user.isAIPortal) {
+            await db.incrementUserUsage(req.user.userId);
         }
         
-        const user = await db.getUser(req.user.userId);
-        res.json({ 
-            success: true, 
-            email: user.email, 
-            plan: user.plan, 
-            usage: user.usage_count 
-        });
+        res.json({ success: true, copy: generatedCopy });
     } catch (error) {
-        res.status(500).json({ success: false, error: 'Failed to fetch user data' });
+        console.error('Copy generation error:', error);
+        res.status(500).json({ success: false, error: 'AI service failed.' });
     }
 });
 
-// AI Portal Function Calling Endpoint
+// NEW: AI Portal Function Calling Endpoint
 app.post('/api/ai-portal/function-call', authenticateAIPortal, async (req, res) => {
     try {
         const { function_name, arguments: args } = req.body;
         
         switch (function_name) {
             case 'generateAdCopy':
-                if (!llmService) {
-                    return res.status(503).json({ error: 'AI service not available' });
-                }
                 const copyResult = await generateCopyLogic(args);
                 res.json({ success: true, result: copyResult });
                 break;
                 
             case 'getFrameworks':
-                res.json({ success: true, result: frameworks || {} });
+                res.json({ success: true, result: frameworks });
                 break;
                 
             case 'getNiches':
-                res.json({ success: true, result: niches || {} });
+                res.json({ success: true, result: niches });
                 break;
                 
             case 'getUserUsage':
+                // For AI Portal, return dummy data or aggregate stats
                 res.json({ 
                     success: true, 
                     result: { 
@@ -318,7 +215,51 @@ async function generateCopyLogic(args) {
     return { copy: generatedCopy };
 }
 
-// Function definitions endpoint for AI Portal
+// Enhanced endpoints with AI Portal support
+app.get('/api/user/me', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.isAIPortal) {
+            return res.json({ 
+                success: true, 
+                email: 'ai-portal@system', 
+                plan: 'unlimited', 
+                usage: 0 
+            });
+        }
+        
+        const user = await db.getUser(req.user.userId);
+        res.json({ 
+            success: true, 
+            email: user.email, 
+            plan: user.plan, 
+            usage: user.usage_count 
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Failed to fetch user data' });
+    }
+});
+
+// Public endpoints (no authentication required)
+app.get('/api/frameworks', (req, res) => res.json(frameworks));
+app.get('/api/niches', (req, res) => res.json(niches));
+
+// NEW: Health check endpoint for AI Portal
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        success: true, 
+        service: 'CopyShark', 
+        status: 'online',
+        timestamp: new Date().toISOString(),
+        available_functions: [
+            'generateAdCopy',
+            'getFrameworks', 
+            'getNiches',
+            'getUserUsage'
+        ]
+    });
+});
+
+// NEW: Function definitions endpoint for AI Portal
 app.get('/api/functions', (req, res) => {
     const functionDefinitions = [
         {
@@ -338,12 +279,12 @@ app.get('/api/functions', (req, res) => {
                     niche: {
                         type: "string",
                         description: "Business niche/category",
-                        enum: Object.keys(niches || {})
+                        enum: Object.keys(niches)
                     },
                     framework: {
                         type: "string",
                         description: "Marketing framework to use for the copy structure",
-                        enum: Object.keys(frameworks || {})
+                        enum: Object.keys(frameworks)
                     },
                     tone: {
                         type: "string",
@@ -396,19 +337,11 @@ app.use((error, req, res, next) => {
     });
 });
 
-// Basic route
-app.get('/', (req, res) => {
-    res.json({ message: 'CopyShark API is running!' });
-});
-
 const PORT = process.env.PORT || 3000;
-const HOST = "0.0.0.0";
+const HOST = "0.0.0.0";  // Accept external connections
 
 app.listen(PORT, HOST, () => {
     console.log(`🚀 CopyShark is LIVE at ${HOST}:${PORT}`);
     console.log(`📡 AI Portal Integration: ${AI_PORTAL_API_KEY ? 'ENABLED' : 'DISABLED'}`);
-    console.log(`💳 Stripe: ${stripe ? 'ENABLED' : 'DISABLED'}`);
-    console.log(`🤖 LLM Service: ${llmService ? 'ENABLED' : 'DISABLED'}`);
-    console.log(`🗄️ Database: ${db ? 'ENABLED' : 'DISABLED'}`);
     console.log(`🔑 Available functions: generateAdCopy, getFrameworks, getNiches, getUserUsage`);
 });
