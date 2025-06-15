@@ -1,0 +1,1 @@
+module.exports = { ecommerce: { name: 'eCommerce' }, saas: { name: 'SaaS' }};
