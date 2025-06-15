@@ -4,12 +4,44 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-const llmService = require('./services/llmService');
-const db = require('./database');
-const frameworks = require('./data/frameworks');
-const niches = require('./data/niches');
+// Conditionally load Stripe only if needed
+let stripe;
+if (process.env.STRIPE_SECRET_KEY) {
+    try {
+        stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    } catch (err) {
+        console.warn('Stripe not available:', err.message);
+    }
+}
+
+// Conditionally load your custom modules
+let llmService, db, frameworks, niches;
+try {
+    llmService = require('./services/llmService');
+} catch (err) {
+    console.warn('LLM Service not available:', err.message);
+}
+
+try {
+    db = require('./database');
+} catch (err) {
+    console.warn('Database module not available:', err.message);
+}
+
+try {
+    frameworks = require('./data/frameworks');
+} catch (err) {
+    console.warn('Frameworks data not available:', err.message);
+    frameworks = {};
+}
+
+try {
+    niches = require('./data/niches');
+} catch (err) {
+    console.warn('Niches data not available:', err.message);
+    niches = {};
+}
 
 const app = express();
 
@@ -92,5 +124,8 @@ const HOST = "0.0.0.0";
 app.listen(PORT, HOST, () => {
     console.log(`🚀 CopyShark is LIVE at ${HOST}:${PORT}`);
     console.log(`📡 AI Portal Integration: ${AI_PORTAL_API_KEY ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`💳 Stripe: ${stripe ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`🤖 LLM Service: ${llmService ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`🗄️ Database: ${db ? 'ENABLED' : 'DISABLED'}`);
     console.log(`🔑 Available functions: generateAdCopy, getFrameworks, getNiches, getUserUsage`);
 });
