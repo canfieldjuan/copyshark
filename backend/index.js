@@ -37,12 +37,22 @@ app.post('/api/payments/webhook', express.raw({type: 'application/json'}), async
 });
 
 // Enhanced CORS configuration for AI Portal integration
+
+    allowedOrigins.push(process.env.FRONTEND_URL);
+}
+// Add the production AI Portal URL from an environment variable if it exists
+if (process.env.AI_PORTAL_URL) {
+    allowedOrigins.push(process.env.AI_PORTAL_URL);
+}
+
+
 app.use(cors({
-    origin: [
-        'http://localhost:3000',  // CopyShark frontend
-        'http://localhost:8000',  // AI Portal
-        'http://127.0.0.1:8000',  // AI Portal alternative
-        'https://your-ai-portal-domain.com'  // Production AI Portal
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
+}));
+
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
