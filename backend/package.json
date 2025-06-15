@@ -2,9 +2,9 @@
     "name": "copyshark-production",
     "version": "5.0.0",
     "description": "Deployable, Secure, Intelligent, Database-driven AI Copy Generator",
-    "main": "backend/server.js",
+    "main": "server.js",
     "scripts": {
-        "start": "node backend/server.js"
+        "start": "node server.js"
     },
     "dependencies": {
         "@google/generative-ai": "^0.24.1",
