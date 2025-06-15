@@ -355,4 +355,3 @@ app.listen(PORT, HOST, () => {
     console.log(`📡 AI Portal Integration: ${AI_PORTAL_API_KEY ? 'ENABLED' : 'DISABLED'}`);
     console.log(`🔑 Available functions: generateAdCopy, getFrameworks, getNiches, getUserUsage`);
 });
-});
