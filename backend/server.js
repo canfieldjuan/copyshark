@@ -113,6 +113,42 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Authentication endpoints
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        const { email, password } = req.body;
+        if (!email || !password) return res.status(400).json({ error: 'Email and password required.' });
+        const user = await db.createUser(email, password);
+        res.status(201).json({ success: true, userId: user.id });
+    } catch (error) {
+        res.status(409).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        const { email, password } = req.body;
+        const user = await db.findUserByEmail(email);
+        if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+            return res.status(401).json({ error: 'Invalid credentials.' });
+        }
+        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1d' });
+        res.json({ success: true, token });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Login failed.' });
+    }
+});
+
+// Public endpoints
+app.get('/api/frameworks', (req, res) => res.json(frameworks || {}));
+app.get('/api/niches', (req, res) => res.json(niches || {}));
+
 // Basic route
 app.get('/', (req, res) => {
     res.json({ message: 'CopyShark API is running!' });
