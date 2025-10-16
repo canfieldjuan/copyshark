@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CopyShark Workspace</title>
+    <style>
+      :root {
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 20px;
+        --space-6: 24px;
+        --space-7: 32px;
+        --bg: #0f172a;
+        --panel: #111c36;
+        --accent: #60a5fa;
+        --accent-soft: rgba(96, 165, 250, 0.18);
+        --accent-strong: #2563eb;
+        --muted: #94a3b8;
+        --muted-strong: #cbd5f5;
+        --success: #22c55e;
+        --warning: #f59e0b;
+        --danger: #f87171;
+        --brand-ink: #f1f5f9;
+        --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        --radius: 14px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        background: radial-gradient(circle at top right, rgba(96, 165, 250, 0.18), transparent 60%),
+          var(--bg);
+        color: var(--brand-ink);
+        min-height: 100vh;
+        padding: var(--space-6) var(--space-7);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .app-shell {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-6);
+      }
+
+      .panel {
+        background: var(--panel);
+        border-radius: var(--radius);
+        padding: var(--space-6);
+        box-shadow: 0 14px 40px rgba(15, 23, 42, 0.35);
+        border: 1px solid rgba(148, 163, 184, 0.08);
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0 0 var(--space-4) 0;
+        font-weight: 600;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      h3 {
+        font-size: 16px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .auth-grid,
+      .workspace {
+        display: grid;
+        gap: var(--space-6);
+      }
+
+      .auth-grid {
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      }
+
+      label {
+        display: block;
+        margin-bottom: var(--space-2);
+        font-size: 13px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: var(--space-3) var(--space-3);
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        background: rgba(15, 23, 42, 0.65);
+        color: var(--brand-ink);
+        font-size: 15px;
+      }
+
+      textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: 2px solid rgba(96, 165, 250, 0.45);
+        border-color: transparent;
+      }
+
+      button {
+        border: none;
+        border-radius: 10px;
+        padding: var(--space-3) var(--space-4);
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent-strong), #7c3aed);
+        color: white;
+        box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 32px rgba(79, 70, 229, 0.4);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        color: var(--muted-strong);
+      }
+
+      .btn-muted {
+        background: rgba(148, 163, 184, 0.18);
+        color: var(--muted-strong);
+      }
+
+      .workspace {
+        grid-template-columns: 290px 340px 1fr;
+      }
+
+      @media (max-width: 1100px) {
+        .workspace {
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+      }
+
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+      }
+
+      .brand-card,
+      .project-card,
+      .variant-card {
+        background: rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(96, 165, 250, 0.1);
+        border-radius: 12px;
+        padding: var(--space-4);
+        display: grid;
+        gap: var(--space-3);
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+
+      .brand-card.active,
+      .project-card.active,
+      .variant-card.active {
+        border-color: var(--accent);
+        background: rgba(96, 165, 250, 0.12);
+      }
+
+      .tag-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+      }
+
+      .tag {
+        background: rgba(96, 165, 250, 0.18);
+        color: var(--muted-strong);
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+      }
+
+      .announcement {
+        border-radius: 12px;
+        padding: var(--space-4);
+        border: 1px solid transparent;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-4);
+      }
+
+      .announcement.info {
+        background: rgba(96, 165, 250, 0.15);
+        border-color: rgba(96, 165, 250, 0.35);
+      }
+
+      .announcement.success {
+        background: rgba(34, 197, 94, 0.18);
+        border-color: rgba(34, 197, 94, 0.35);
+      }
+
+      .announcement.warning {
+        background: rgba(245, 158, 11, 0.18);
+        border-color: rgba(245, 158, 11, 0.35);
+      }
+
+      .announcement.error {
+        background: rgba(248, 113, 113, 0.18);
+        border-color: rgba(248, 113, 113, 0.4);
+      }
+
+      .assistant-card {
+        background: rgba(15, 23, 42, 0.45);
+        border: 1px dashed rgba(148, 163, 184, 0.3);
+        border-radius: 12px;
+        padding: var(--space-4);
+        color: var(--muted-strong);
+        font-size: 14px;
+      }
+
+      .assistant-card strong {
+        color: var(--accent);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+      }
+
+      .chip {
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .variant-body {
+        background: rgba(15, 23, 42, 0.6);
+        border-radius: 10px;
+        padding: var(--space-3);
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+
+      .variant-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+      }
+
+      .status-pill {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: rgba(96, 165, 250, 0.12);
+        border: 1px solid rgba(96, 165, 250, 0.25);
+      }
+
+      .conversation-note {
+        font-size: 15px;
+        line-height: 1.7;
+        color: var(--muted-strong);
+      }
+
+      .form-grid {
+        display: grid;
+        gap: var(--space-4);
+      }
+
+      .inline {
+        display: flex;
+        gap: var(--space-3);
+      }
+
+      .inline > * {
+        flex: 1;
+      }
+
+      .list-empty {
+        text-align: center;
+        padding: var(--space-5);
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px dashed rgba(148, 163, 184, 0.2);
+        color: var(--muted-strong);
+      }
+
+      .tone-banner {
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.4), rgba(147, 51, 234, 0.35));
+        padding: var(--space-4);
+        border-radius: 12px;
+        margin-bottom: var(--space-4);
+      }
+
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: var(--space-6);
+      }
+
+      .modal-content {
+        background: var(--panel);
+        border-radius: var(--radius);
+        padding: var(--space-6);
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+
+      .btn-danger {
+        background: var(--danger);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+
+      .btn-danger:hover:not(:disabled) {
+        background: #ef4444;
+        transform: translateY(-1px);
+      }
+
+      .btn-danger:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="./vendor/react-lite.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel">
+      const { useState, useEffect, useMemo, useCallback } = React;
+
+      class ApiError extends Error {
+        constructor(status, message) {
+          super(message);
+          this.status = status;
+        }
+      }
+
+      const API_BASE = '';
+
+      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      const friendlyPhrases = [
+        'Let\'s keep your brand voice sharp and on-message.',
+        'Need more angles? Ask for fresh variants any time.',
+        'Favorites help you curate a ready-to-launch library.',
+        'Feedback makes the graph smarter. Drop a note when something sings or stumbles.',
+      ];
+
+      const VariantActions = ({ variant, onFavorite, onExport, onFeedback, onEdit, onViewHistory }) => {
+        return (
+          <div className="variant-actions">
+            <button className="btn-muted" onClick={() => onFavorite(variant)}>
+              {variant.isFavorite ? '★ Favorited' : '☆ Mark Favorite'}
+            </button>
+            <button className="btn-ghost" onClick={() => onEdit(variant)}>
+              ✏️ Edit
+            </button>
+            <button className="btn-ghost" onClick={() => onExport(variant, 'clipboard')}>
+              Copy to Clipboard
+            </button>
+            <button className="btn-ghost" onClick={() => onExport(variant, 'markdown')}>
+              Download Markdown
+            </button>
+            <button className="btn-ghost" onClick={() => onFeedback(variant)}>
+              Share Feedback
+            </button>
+            <button className="btn-ghost" onClick={() => onViewHistory(variant)}>
+              📊 View History
+            </button>
+          </div>
+        );
+      };
+
+      const VariantEditorModal = ({
+        variant,
+        onSave,
+        onClose,
+        busy,
+      }) => {
+        const [form, setForm] = useState({
+          headline: variant?.headline || '',
+          body: variant?.body || '',
+          cta: variant?.cta || '',
+        });
+
+        useEffect(() => {
+          if (variant) {
+            setForm({
+              headline: variant.headline || '',
+              body: variant.body || '',
+              cta: variant.cta || '',
+            });
+          }
+        }, [variant]);
+
+        const handleChange = (field, value) => {
+          setForm((prev) => ({ ...prev, [field]: value }));
+        };
+
+        const handleSubmit = (event) => {
+          event.preventDefault();
+          onSave(variant.id, form);
+        };
+
+        if (!variant) return null;
+
+        return (
+          <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0 }}>Edit Variant</h2>
+                <button onClick={onClose} className="btn-secondary" disabled={busy}>Close</button>
+              </div>
+              
+              <form onSubmit={handleSubmit} className="stack">
+                <div>
+                  <label htmlFor="edit-headline">Headline</label>
+                  <input
+                    id="edit-headline"
+                    value={form.headline}
+                    onChange={(event) => handleChange('headline', event.target.value)}
+                    placeholder="Your compelling headline"
+                    disabled={busy}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-body">Body Copy</label>
+                  <textarea
+                    id="edit-body"
+                    value={form.body}
+                    onChange={(event) => handleChange('body', event.target.value)}
+                    placeholder="Main persuasive content..."
+                    rows={8}
+                    disabled={busy}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-cta">Call to Action</label>
+                  <input
+                    id="edit-cta"
+                    value={form.cta}
+                    onChange={(event) => handleChange('cta', event.target.value)}
+                    placeholder="Schedule Your Demo Today"
+                    disabled={busy}
+                  />
+                </div>
+                
+                <button type="submit" className="btn-primary" disabled={busy} style={{ marginTop: '20px' }}>
+                  {busy ? 'Saving…' : 'Save Changes'}
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+      };
+
+      const FeedbackHistoryModal = ({
+        variant,
+        feedback,
+        loading,
+        onClose,
+      }) => {
+        if (!variant) return null;
+
+        return (
+          <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0 }}>Feedback History</h2>
+                <button onClick={onClose} className="btn-secondary">Close</button>
+              </div>
+              
+              <div style={{ marginBottom: '16px', padding: '12px', background: 'rgba(96, 165, 250, 0.1)', borderRadius: '8px' }}>
+                <strong style={{ display: 'block', marginBottom: '4px' }}>{variant.headline || 'Untitled Variant'}</strong>
+                <span className="conversation-note" style={{ fontSize: '13px' }}>
+                  Generated {new Date(variant.generatedAt).toLocaleString()}
+                </span>
+              </div>
+
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
+                  Loading feedback history...
+                </div>
+              ) : feedback.length === 0 ? (
+                <div className="list-empty">
+                  No feedback yet for this variant. Share your thoughts to build the knowledge graph.
+                </div>
+              ) : (
+                <div className="stack">
+                  {feedback.map((item, index) => (
+                    <div
+                      key={item.id || index}
+                      style={{
+                        padding: '16px',
+                        background: 'rgba(148, 163, 184, 0.05)',
+                        borderRadius: '8px',
+                        borderLeft: '3px solid var(--accent)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span className="conversation-note" style={{ fontSize: '13px' }}>
+                          {new Date(item.createdAt).toLocaleString()}
+                        </span>
+                        {item.rating && (
+                          <span className="chip">
+                            {'★'.repeat(item.rating)}{'☆'.repeat(5 - item.rating)} ({item.rating}/5)
+                          </span>
+                        )}
+                      </div>
+                      {item.notes && (
+                        <p style={{ margin: 0, color: 'var(--brand-ink)', lineHeight: 1.6 }}>
+                          {item.notes}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      const FeedbackModal = ({ variant, onClose, onSubmit }) => {
+        if (!variant) return null;
+
+        const [rating, setRating] = React.useState(null);
+        const [notes, setNotes] = React.useState('');
+        const [hoveredRating, setHoveredRating] = React.useState(null);
+
+        const handleSubmit = () => {
+          if (!rating && !notes.trim()) {
+            alert('Please provide a rating or notes before submitting.');
+            return;
+          }
+          onSubmit({ rating, notes: notes.trim() || null });
+        };
+
+        return (
+          <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0 }}>Share Feedback</h2>
+                <button onClick={onClose} className="btn-secondary">Cancel</button>
+              </div>
+              
+              <div style={{ marginBottom: '20px', padding: '12px', background: 'rgba(96, 165, 250, 0.1)', borderRadius: '8px' }}>
+                <strong style={{ display: 'block', marginBottom: '4px' }}>{variant.headline || 'Untitled Variant'}</strong>
+                <span className="conversation-note" style={{ fontSize: '13px' }}>
+                  Generated {new Date(variant.generatedAt).toLocaleString()}
+                </span>
+              </div>
+
+              <div className="stack">
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                    How did this variant perform? (Optional)
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px', fontSize: '32px' }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRating(star)}
+                        onMouseEnter={() => setHoveredRating(star)}
+                        onMouseLeave={() => setHoveredRating(null)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 0,
+                          color: star <= (hoveredRating || rating || 0) ? '#fbbf24' : '#e5e7eb',
+                          transition: 'color 0.2s',
+                        }}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="feedback-notes" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                    Notes for the knowledge graph (Optional)
+                  </label>
+                  <textarea
+                    id="feedback-notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Share insights about this variant's performance, audience response, or suggested improvements..."
+                    rows="4"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid var(--border)',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontFamily: 'inherit',
+                      resize: 'vertical',
+                    }}
+                  />
+                </div>
+
+                <button onClick={handleSubmit} className="btn-primary" style={{ width: '100%' }}>
+                  Submit Feedback
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const Announcement = ({ status, onDismiss }) => {
+        if (!status) return null;
+        return (
+          <div className={`announcement ${status.type || 'info'}`}>
+            <div>
+              <strong style={{ display: 'block', marginBottom: '8px' }}>{status.heading || 'Heads up'}</strong>
+              <span>{status.message}</span>
+            </div>
+            <button className="btn-ghost" onClick={onDismiss}>
+              Dismiss
+            </button>
+          </div>
+        );
+      };
+
+      const AuthPanel = ({ onLogin, onRegister, busy }) => {
+        const [mode, setMode] = useState('login');
+        const [email, setEmail] = useState('');
+        const [password, setPassword] = useState('');
+
+        const handleSubmit = (event) => {
+          event.preventDefault();
+          if (mode === 'login') {
+            onLogin({ email, password });
+          } else {
+            onRegister({ email, password });
+          }
+        };
+
+        return (
+          <div className="panel">
+            <div className="tone-banner">
+              <h1>🦈 CopyShark Concierge</h1>
+              <p className="conversation-note">
+                Slide in with your credentials and we\'ll remember the tone, tales, and triumphs that make your brand irresistible.
+              </p>
+            </div>
+            <form onSubmit={handleSubmit} className="form-grid">
+              <div>
+                <label htmlFor="auth-email">Email</label>
+                <input
+                  id="auth-email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@brand.co"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="auth-password">Password</label>
+                <input
+                  id="auth-password"
+                  type="password"
+                  minLength={6}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="inline" style={{ alignItems: 'center' }}>
+                <button type="submit" className="btn-primary" disabled={busy}>
+                  {busy ? 'Working the magic…' : mode === 'login' ? 'Step Inside' : 'Create My Space'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                >
+                  {mode === 'login' ? 'Need an invite?' : 'Already with us?'}
+                </button>
+              </div>
+            </form>
+          </div>
+        );
+      };
+
+      const BrandBoard = ({
+        brands,
+        onCreate,
+        selectedBrand,
+        onSelect,
+        onEdit,
+        busy,
+      }) => {
+        const [form, setForm] = useState({ name: '', tone: '', audience: '', valueProps: '', brandVoice: '' });
+
+        const handleChange = (field, value) => {
+          setForm((prev) => ({ ...prev, [field]: value }));
+        };
+
+        const handleCreate = (event) => {
+          event.preventDefault();
+          onCreate(form, () => setForm({ name: '', tone: '', audience: '', valueProps: '', brandVoice: '' }));
+        };
+
+        return (
+          <div className="panel stack">
+            <div>
+              <h2>Your Brands</h2>
+              <p className="conversation-note">
+                Curate the voices you steward. Save personas, tone nudges, and value sparks so every campaign starts in the right register.
+              </p>
+            </div>
+            <form onSubmit={handleCreate} className="stack">
+              <div>
+                <label htmlFor="brand-name">Brand name</label>
+                <input
+                  id="brand-name"
+                  value={form.name}
+                  onChange={(event) => handleChange('name', event.target.value)}
+                  placeholder="Moonbeam Analytics"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="brand-tone">Tone keywords</label>
+                <input
+                  id="brand-tone"
+                  value={form.tone}
+                  onChange={(event) => handleChange('tone', event.target.value)}
+                  placeholder="Warm, optimistic, pragmatic"
+                />
+              </div>
+              <div>
+                <label htmlFor="brand-audience">Audience snapshots</label>
+                <textarea
+                  id="brand-audience"
+                  value={form.audience}
+                  onChange={(event) => handleChange('audience', event.target.value)}
+                  placeholder="product marketers, revenue leaders, sales enablement"
+                />
+              </div>
+              <div>
+                <label htmlFor="brand-value">Value highlights</label>
+                <textarea
+                  id="brand-value"
+                  value={form.valueProps}
+                  onChange={(event) => handleChange('valueProps', event.target.value)}
+                  placeholder="360° pipeline view, AI-assisted insights, guided playbooks"
+                />
+              </div>
+              <div>
+                <label htmlFor="brand-voice">Brand voice cues</label>
+                <textarea
+                  id="brand-voice"
+                  value={form.brandVoice}
+                  onChange={(event) => handleChange('brandVoice', event.target.value)}
+                  placeholder="Speak like a seasoned strategist with a friendly wink."
+                />
+              </div>
+              <button type="submit" className="btn-primary" disabled={busy}>
+                {busy ? 'Saving…' : 'Save brand profile'}
+              </button>
+            </form>
+
+            <div className="stack">
+              {brands.length === 0 ? (
+                <div className="list-empty">No brands yet. Add one and we\'ll remember the vibe for every campaign.</div>
+              ) : (
+                brands.map((brand) => (
+                  <div
+                    key={brand.id}
+                    className={`brand-card ${selectedBrand?.id === brand.id ? 'active' : ''}`}
+                    role="button"
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong onClick={() => onSelect(brand)} style={{ cursor: 'pointer', flex: 1 }}>{brand.name}</strong>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span className="status-pill">Updated {new Date(brand.updatedAt).toLocaleDateString()}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(brand);
+                          }}
+                          className="btn-secondary"
+                          style={{ padding: '4px 12px', fontSize: '14px' }}
+                          title="Edit brand settings"
+                        >
+                          ⚙️
+                        </button>
+                      </div>
+                    </div>
+                    <div className="chips" onClick={() => onSelect(brand)} style={{ cursor: 'pointer' }}>
+                      {brand.tone && <span className="chip">Tone · {brand.tone}</span>}
+                      {brand.audience && <span className="chip">Audience · {brand.audience}</span>}
+                    </div>
+                    {brand.brandVoice && (
+                      <p className="conversation-note" style={{ margin: 0, cursor: 'pointer' }} onClick={() => onSelect(brand)}>{brand.brandVoice}</p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      const BrandSettingsModal = ({
+        brand,
+        onUpdate,
+        onDelete,
+        onClose,
+        busy,
+      }) => {
+        const [form, setForm] = useState({
+          name: brand?.name || '',
+          tone: brand?.tone || '',
+          audience: brand?.audience || '',
+          valueProps: brand?.valueProps || '',
+          brandVoice: brand?.brandVoice || '',
+        });
+
+        useEffect(() => {
+          if (brand) {
+            setForm({
+              name: brand.name || '',
+              tone: brand.tone || '',
+              audience: brand.audience || '',
+              valueProps: brand.valueProps || '',
+              brandVoice: brand.brandVoice || '',
+            });
+          }
+        }, [brand]);
+
+        const handleChange = (field, value) => {
+          setForm((prev) => ({ ...prev, [field]: value }));
+        };
+
+        const handleSubmit = (event) => {
+          event.preventDefault();
+          onUpdate(brand.id, form);
+        };
+
+        const handleDelete = () => {
+          if (confirm(`Delete "${brand.name}" and all its projects? This cannot be undone.`)) {
+            onDelete(brand.id);
+          }
+        };
+
+        if (!brand) return null;
+
+        return (
+          <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0 }}>Brand Settings</h2>
+                <button onClick={onClose} className="btn-secondary" disabled={busy}>Close</button>
+              </div>
+              
+              <form onSubmit={handleSubmit} className="stack">
+                <div>
+                  <label htmlFor="edit-brand-name">Brand name</label>
+                  <input
+                    id="edit-brand-name"
+                    value={form.name}
+                    onChange={(event) => handleChange('name', event.target.value)}
+                    placeholder="Moonbeam Analytics"
+                    required
+                    disabled={busy}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-brand-tone">Tone keywords</label>
+                  <input
+                    id="edit-brand-tone"
+                    value={form.tone}
+                    onChange={(event) => handleChange('tone', event.target.value)}
+                    placeholder="Warm, optimistic, pragmatic"
+                    disabled={busy}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-brand-audience">Audience snapshots</label>
+                  <textarea
+                    id="edit-brand-audience"
+                    value={form.audience}
+                    onChange={(event) => handleChange('audience', event.target.value)}
+                    placeholder="product marketers, revenue leaders, sales enablement"
+                    disabled={busy}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-brand-value">Value highlights</label>
+                  <textarea
+                    id="edit-brand-value"
+                    value={form.valueProps}
+                    onChange={(event) => handleChange('valueProps', event.target.value)}
+                    placeholder="360° pipeline view, AI-assisted insights, guided playbooks"
+                    disabled={busy}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-brand-voice">Brand voice cues</label>
+                  <textarea
+                    id="edit-brand-voice"
+                    value={form.brandVoice}
+                    onChange={(event) => handleChange('brandVoice', event.target.value)}
+                    placeholder="Speak like a seasoned strategist with a friendly wink."
+                    disabled={busy}
+                  />
+                </div>
+                
+                <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                  <button type="submit" className="btn-primary" disabled={busy} style={{ flex: 1 }}>
+                    {busy ? 'Saving…' : 'Save Changes'}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={handleDelete} 
+                    className="btn-danger" 
+                    disabled={busy}
+                    style={{ flex: 1 }}
+                  >
+                    {busy ? 'Deleting…' : 'Delete Brand'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      };
+
+      const ProjectBoard = ({
+        projects,
+        selectedProject,
+        onSelect,
+        onCreate,
+        taxonomy,
+        brand,
+        busy,
+      }) => {
+        const [form, setForm] = useState({
+          title: '',
+          objective: '',
+          brief: '',
+          nicheId: '',
+          frameworkId: '',
+          targetChannel: '',
+        });
+
+        useEffect(() => {
+          setForm((prev) => ({ ...prev, nicheId: taxonomy.niches[0]?.id || '', frameworkId: taxonomy.frameworks[0]?.id || '' }));
+        }, [taxonomy.niches, taxonomy.frameworks]);
+
+        const handleChange = (field, value) => {
+          setForm((prev) => ({ ...prev, [field]: value }));
+        };
+
+        const handleSubmit = (event) => {
+          event.preventDefault();
+          if (!brand) return;
+          onCreate({ ...form, brandId: brand.id }, () =>
+            setForm({
+              title: '',
+              objective: '',
+              brief: '',
+              nicheId: taxonomy.niches[0]?.id || '',
+              frameworkId: taxonomy.frameworks[0]?.id || '',
+              targetChannel: '',
+            })
+          );
+        };
+
+        return (
+          <div className="panel stack">
+            <div>
+              <h2>Campaigns</h2>
+              <p className="conversation-note">
+                Each card is a workspace where we\'ll spin up variants, favorites, and feedback. Let\'s keep the story straight.
+              </p>
+            </div>
+            <form onSubmit={handleSubmit} className="stack">
+              <div>
+                <label htmlFor="project-title">Project title</label>
+                <input
+                  id="project-title"
+                  value={form.title}
+                  onChange={(event) => handleChange('title', event.target.value)}
+                  placeholder="Spring product launch"
+                  required
+                  disabled={!brand}
+                />
+              </div>
+              <div className="inline">
+                <div>
+                  <label htmlFor="project-niche">Niche</label>
+                  <select
+                    id="project-niche"
+                    value={form.nicheId}
+                    onChange={(event) => handleChange('nicheId', event.target.value)}
+                    disabled={!brand}
+                  >
+                    {taxonomy.niches.map((niche) => (
+                      <option key={niche.id} value={niche.id}>
+                        {niche.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="project-framework">Framework</label>
+                  <select
+                    id="project-framework"
+                    value={form.frameworkId}
+                    onChange={(event) => handleChange('frameworkId', event.target.value)}
+                    disabled={!brand}
+                  >
+                    {taxonomy.frameworks.map((framework) => (
+                      <option key={framework.id} value={framework.id}>
+                        {framework.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="project-objective">Objective</label>
+                <textarea
+                  id="project-objective"
+                  value={form.objective}
+                  onChange={(event) => handleChange('objective', event.target.value)}
+                  placeholder="Drive demo requests for the revamped analytics suite"
+                  disabled={!brand}
+                />
+              </div>
+              <div>
+                <label htmlFor="project-brief">Creative brief</label>
+                <textarea
+                  id="project-brief"
+                  value={form.brief}
+                  onChange={(event) => handleChange('brief', event.target.value)}
+                  placeholder="Speak to RevOps leaders tired of stitching together spreadsheets. Highlight our new scenario planning."
+                  disabled={!brand}
+                />
+              </div>
+              <div>
+                <label htmlFor="project-channel">Primary channel</label>
+                <input
+                  id="project-channel"
+                  value={form.targetChannel}
+                  onChange={(event) => handleChange('targetChannel', event.target.value)}
+                  placeholder="Email nurture, landing page, LinkedIn carousel..."
+                  disabled={!brand}
+                />
+              </div>
+              <button type="submit" className="btn-primary" disabled={!brand || busy}>
+                {busy ? 'Spinning up…' : 'Open campaign workspace'}
+              </button>
+            </form>
+
+            <div className="stack">
+              {projects.length === 0 ? (
+                <div className="list-empty">No campaigns yet. Spin one up when you\'re ready to brief the shark.</div>
+              ) : (
+                projects.map((project) => (
+                  <div
+                    key={project.id}
+                    className={`project-card ${selectedProject?.id === project.id ? 'active' : ''}`}
+                    onClick={() => onSelect(project)}
+                    role="button"
+                  >
+                    <strong>{project.title}</strong>
+                    <div className="chips">
+                      {project.targetChannel && <span className="chip">Channel · {project.targetChannel}</span>}
+                      {project.nicheId && <span className="chip">Niche · {project.nicheId}</span>}
+                    </div>
+                    {project.objective && <p className="conversation-note" style={{ margin: 0 }}>{project.objective}</p>}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      const VariantBoard = ({
+        project,
+        variants,
+        onGenerate,
+        onFavorite,
+        onExport,
+        onFeedback,
+        onEdit,
+        onViewHistory,
+        taxonomy,
+        models,
+        busy,
+      }) => {
+        const [form, setForm] = useState({
+          productName: '',
+          audience: '',
+          tone: project?.tone || 'conversational',
+          model: models[0]?.id || '',
+          variantCount: 2,
+        });
+
+        useEffect(() => {
+          setForm((prev) => ({ ...prev, model: models[0]?.id || prev.model }));
+        }, [models]);
+
+        useEffect(() => {
+          if (!project) {
+            setForm({ productName: '', audience: '', tone: 'conversational', model: models[0]?.id || '', variantCount: 2 });
+          }
+        }, [project, models]);
+
+        const handleChange = (field, value) => {
+          setForm((prev) => ({ ...prev, [field]: value }));
+        };
+
+        const handleSubmit = (event) => {
+          event.preventDefault();
+          onGenerate(form);
+        };
+
+        return (
+          <div className="panel stack">
+            <div>
+              <h2>Variant Lab</h2>
+              <p className="conversation-note">
+                We\'ll pull from your brand archive, graph cues, and the latest brief to craft variants. Mark favorites, leave breadcrumbs, and export the gems for your team.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="stack">
+              <div className="inline">
+                <div>
+                  <label htmlFor="variant-product">Product or topic</label>
+                  <input
+                    id="variant-product"
+                    value={form.productName}
+                    onChange={(event) => handleChange('productName', event.target.value)}
+                    placeholder="LLM Fine-tuning Accelerator"
+                    required
+                    disabled={!project}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="variant-audience">Audience</label>
+                  <input
+                    id="variant-audience"
+                    value={form.audience}
+                    onChange={(event) => handleChange('audience', event.target.value)}
+                    placeholder="AI leads, CTOs, enablement partners"
+                    required
+                    disabled={!project}
+                  />
+                </div>
+              </div>
+              <div className="inline">
+                <div>
+                  <label htmlFor="variant-tone">Tone</label>
+                  <input
+                    id="variant-tone"
+                    value={form.tone}
+                    onChange={(event) => handleChange('tone', event.target.value)}
+                    placeholder="Confident, collaborative, insight-driven"
+                    disabled={!project}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="variant-model">Model</label>
+                  <select
+                    id="variant-model"
+                    value={form.model}
+                    onChange={(event) => handleChange('model', event.target.value)}
+                    disabled={!project}
+                  >
+                    {models.map((model) => (
+                      <option key={model.id} value={model.id}>
+                        {model.label || model.id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ maxWidth: '140px' }}>
+                  <label htmlFor="variant-count">Variants</label>
+                  <input
+                    id="variant-count"
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={form.variantCount}
+                    onChange={(event) => handleChange('variantCount', Number(event.target.value))}
+                    disabled={!project}
+                  />
+                </div>
+              </div>
+              <button type="submit" className="btn-primary" disabled={!project || busy}>
+                {busy ? 'We\'re writing…' : 'Generate fresh copy'}
+              </button>
+            </form>
+
+            {variants.length === 0 ? (
+              <div className="list-empty">
+                {project ? 'No variants yet. Send over a prompt and we\'ll craft a set.' : 'Pick a campaign to view its variant library.'}
+              </div>
+            ) : (
+              <div className="stack">
+                {variants.map((variant) => (
+                  <div key={variant.id} className={`variant-card ${variant.isFavorite ? 'active' : ''}`}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="chips">
+                        <span className="chip">Model · {variant.model || 'default'}</span>
+                        <span className="chip">Generated {new Date(variant.generatedAt).toLocaleString()}</span>
+                        {variant.score !== null && variant.score !== undefined && (
+                          <span className="chip">Score · {variant.score}</span>
+                        )}
+                      </div>
+                      {variant.isFavorite && <span className="status-pill">⭐ Favorited</span>}
+                    </div>
+                    {variant.headline && <h3 style={{ marginBottom: 'var(--space-3)' }}>{variant.headline}</h3>}
+                    {variant.body && <div className="variant-body">{variant.body}</div>}
+                    {variant.cta && (
+                      <p style={{ margin: '12px 0 0 0', fontWeight: 600 }}>CTA · {variant.cta}</p>
+                    )}
+                    <VariantActions
+                      variant={variant}
+                      onFavorite={onFavorite}
+                      onExport={onExport}
+                      onFeedback={onFeedback}
+                      onEdit={onEdit}
+                      onViewHistory={onViewHistory}
+                    />
+                    {variant.metadata?.context && (
+                      <details>
+                        <summary style={{ cursor: 'pointer', color: 'var(--muted-strong)', marginTop: '12px' }}>
+                          Context & keywords
+                        </summary>
+                        <pre style={{ marginTop: '8px', whiteSpace: 'pre-wrap', color: 'var(--muted)' }}>
+{JSON.stringify(variant.metadata.context, null, 2)}
+                        </pre>
+                      </details>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const KnowledgeGraphPanel = ({
+        enabled,
+        loading,
+        error,
+        insights,
+        query,
+        onQueryChange,
+        onRefresh
+      }) => {
+        if (!enabled) {
+          return (
+            <div className="assistant-card">
+              <strong>Graph insights coming soon</strong>
+              <p>
+                Hook up GraphITI + Neo4j credentials (`GRAPHITI_BASE_URL`, `GRAPHITI_API_KEY`, `NEO4J` secrets) and we\'ll surface
+                relationship intelligence right here.
+              </p>
+              <p style={{ marginBottom: 0 }}>
+                Until then, we\'ll continue storing your feedback locally so you can replay it once the graph is online.
+              </p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="assistant-card">
+            <strong>Graph pulse</strong>
+            <p className="conversation-note" style={{ marginBottom: '12px' }}>
+              Tap the graph to surface patterns, calls, and connections across your campaign history. smoothed edges are ranked by
+              relevance.
+            </p>
+
+            <div className="stack">
+              <div className="inline" style={{ alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(event) => onQueryChange(event.target.value)}
+                  placeholder="Ask the graph (e.g. tone risks, hero benefit, audience)"
+                  style={{ flex: 1 }}
+                />
+                <button type="button" className="btn-muted" onClick={onRefresh} disabled={loading}>
+                  {loading ? 'Refreshing…' : 'Refresh'}
+                </button>
+              </div>
+
+              {error && (
+                <div className="announcement error">
+                  <span>{error}</span>
+                  <button className="btn-ghost" onClick={onRefresh}>Retry</button>
+                </div>
+              )}
+
+              {!error && insights.length === 0 && !loading && (
+                <div className="list-empty" style={{ background: 'rgba(96,165,250,0.08)', borderColor: 'rgba(96,165,250,0.2)' }}>
+                  The graph doesn\'t have any episodes yet. Submit feedback on your variants and we\'ll connect the dots.
+                </div>
+              )}
+
+              <div className="stack">
+                {insights.map((edge) => (
+                  <div key={edge.id} className="variant-card" style={{ gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 600 }}>{edge.name || 'Insight'}</span>
+                      {edge.createdAt && (
+                        <span className="status-pill">
+                          {new Date(edge.createdAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    {edge.fact && <p className="conversation-note" style={{ margin: 0 }}>{edge.fact}</p>}
+                    <div className="chips">
+                      {edge.sourceNode && <span className="chip">Source · {edge.sourceNode}</span>}
+                      {edge.targetNode && <span className="chip">Target · {edge.targetNode}</span>}
+                    </div>
+                    {edge.source && (
+                      <details>
+                        <summary style={{ cursor: 'pointer', color: 'var(--muted-strong)' }}>Source notes</summary>
+                        <p style={{ marginTop: '8px', color: 'var(--muted)' }}>{edge.source}</p>
+                      </details>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      function useRandomPrompt() {
+        const [prompt, setPrompt] = useState(friendlyPhrases[0]);
+        useEffect(() => {
+          const interval = setInterval(() => {
+            const next = friendlyPhrases[Math.floor(Math.random() * friendlyPhrases.length)];
+            setPrompt(next);
+          }, 18000);
+          return () => clearInterval(interval);
+        }, []);
+        return prompt;
+      }
+
+      function App() {
+        const [token, setToken] = useState(() => localStorage.getItem('copyshark_token'));
+        const [user, setUser] = useState(null);
+        const [usage, setUsage] = useState({ plan: 'free', usage: 0, limit: 10 });
+        const [status, setStatus] = useState(null);
+        const [busy, setBusy] = useState(false);
+        const [brands, setBrands] = useState([]);
+        const [selectedBrand, setSelectedBrand] = useState(null);
+        const [projects, setProjects] = useState([]);
+        const [selectedProject, setSelectedProject] = useState(null);
+        const [variants, setVariants] = useState([]);
+        const [taxonomy, setTaxonomy] = useState({ niches: [], frameworks: [] });
+        const [models, setModels] = useState([]);
+        const [graphStatus, setGraphStatus] = useState({ enabled: false });
+        const [graphInsights, setGraphInsights] = useState([]);
+        const [graphLoading, setGraphLoading] = useState(false);
+        const [graphQuery, setGraphQuery] = useState('');
+        const [graphError, setGraphError] = useState(null);
+        const [brandSettingsModal, setBrandSettingsModal] = useState(null);
+        const [variantEditorModal, setVariantEditorModal] = useState(null);
+        const [feedbackHistoryModal, setFeedbackHistoryModal] = useState(null);
+        const [feedbackModal, setFeedbackModal] = useState(null);
+        const [feedbackHistory, setFeedbackHistory] = useState([]);
+        const [feedbackLoading, setFeedbackLoading] = useState(false);
+
+        const conversationPrompt = useRandomPrompt();
+
+        const headers = useMemo(() => {
+          const base = { 'Content-Type': 'application/json' };
+          if (token) {
+            base.Authorization = `Bearer ${token}`;
+          }
+          return base;
+        }, [token]);
+
+        const notify = useCallback((type, message, heading) => {
+          setStatus({ type, message, heading });
+        }, []);
+
+        const apiRequest = useCallback(
+          async (path, options = {}) => {
+            const response = await fetch(`${API_BASE}${path}`, {
+              ...options,
+              headers: { ...headers, ...(options.headers || {}) },
+            });
+            if (response.status === 204) {
+              return null;
+            }
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              const errorMessage = payload?.error || payload?.message || 'Unexpected error';
+              if (response.status === 401) {
+                localStorage.removeItem('copyshark_token');
+                setToken(null);
+              }
+              throw new ApiError(response.status, errorMessage);
+            }
+            return payload;
+          },
+          [headers]
+        );
+
+        const fetchGraphInsights = useCallback(
+          async (brandId, queryValue, forceEnabled) => {
+            const enabled = typeof forceEnabled === 'boolean' ? forceEnabled : graphStatus.enabled;
+            if (!enabled || !brandId) {
+              setGraphInsights([]);
+              return;
+            }
+            try {
+              setGraphLoading(true);
+              setGraphError(null);
+              const params = new URLSearchParams({ brandId });
+              if (queryValue) {
+                params.set('query', queryValue);
+              }
+              const payload = await apiRequest(`/api/graph/insights?${params.toString()}`);
+              setGraphInsights(payload?.insights || []);
+            } catch (error) {
+              setGraphError(error.message || 'Unable to load insights');
+            } finally {
+              setGraphLoading(false);
+            }
+          },
+          [graphStatus.enabled, apiRequest]
+        );
+
+        const bootstrap = useCallback(async () => {
+          if (!token) return;
+          try {
+            setBusy(true);
+            const [userInfo, niches, frameworks, modelList] = await Promise.all([
+              apiRequest('/api/user/me'),
+              apiRequest('/api/niches'),
+              apiRequest('/api/frameworks'),
+              apiRequest('/api/models').catch(() => ({ models: [] })),
+            ]);
+            setUser(userInfo);
+            const limit = userInfo.plan === 'pro' ? Infinity : 10;
+            setUsage({ plan: userInfo.plan, usage: userInfo.usage ?? 0, limit });
+            setTaxonomy({ niches, frameworks });
+            setModels(modelList?.models || []);
+            const graphPayload = await apiRequest('/api/graph/status').catch(() => ({ enabled: false }));
+            setGraphStatus({ enabled: Boolean(graphPayload?.enabled) });
+            const brandPayload = await apiRequest('/api/brands');
+            const brandList = brandPayload?.brands || [];
+            setBrands(brandList);
+            if (brandList.length) {
+              const initialBrand = brandList.find((b) => selectedBrand && b.id === selectedBrand.id) || brandList[0];
+              setSelectedBrand(initialBrand);
+              if (graphPayload?.enabled && initialBrand) {
+                const defaultQuery = initialBrand.name || '';
+                setGraphQuery(defaultQuery);
+                await fetchGraphInsights(initialBrand.id, defaultQuery, graphPayload.enabled);
+              } else {
+                setGraphInsights([]);
+              }
+            }
+            notify('success', 'Welcome back—your workspace is ready whenever you are.', 'Session rehydrated');
+          } catch (error) {
+            if (error instanceof ApiError) {
+              notify('error', error.message, 'Could not refresh workspace');
+            } else {
+              notify('error', 'Unexpected issue while loading your workspace.', 'Oops');
+            }
+          } finally {
+            setBusy(false);
+          }
+        }, [token, apiRequest, notify]);
+
+        useEffect(() => {
+          if (token) {
+            bootstrap();
+          } else {
+            setUser(null);
+            setBrands([]);
+            setProjects([]);
+            setVariants([]);
+            setGraphStatus({ enabled: false });
+            setGraphInsights([]);
+            setGraphQuery('');
+            setGraphError(null);
+          }
+        }, [token, bootstrap]);
+
+        useEffect(() => {
+          if (!selectedBrand) {
+            setProjects([]);
+            setSelectedProject(null);
+            setGraphInsights([]);
+            return;
+          }
+          if (graphStatus.enabled) {
+            const defaultQuery = selectedBrand.name || '';
+            setGraphQuery(defaultQuery);
+            fetchGraphInsights(selectedBrand.id, defaultQuery);
+          } else {
+            setGraphInsights([]);
+          }
+          (async () => {
+            try {
+              const payload = await apiRequest(`/api/brands/${selectedBrand.id}/projects`);
+              const incoming = payload?.projects || [];
+              setProjects(incoming);
+              setSelectedProject((prev) => prev && incoming.find((p) => p.id === prev.id) || incoming[0] || null);
+            } catch (error) {
+              notify('error', error.message, 'Unable to load projects');
+            }
+          })();
+        }, [selectedBrand?.id, selectedBrand?.name, graphStatus.enabled, apiRequest, notify, fetchGraphInsights]);
+
+        useEffect(() => {
+          if (!selectedProject) {
+            setVariants([]);
+            return;
+          }
+          (async () => {
+            try {
+              const payload = await apiRequest(`/api/projects/${selectedProject.id}/variants`);
+              setVariants(payload?.variants || []);
+            } catch (error) {
+              notify('error', error.message, 'Unable to load variants');
+            }
+          })();
+        }, [selectedProject?.id, apiRequest, notify]);
+
+        const handleLogin = async ({ email, password }) => {
+          try {
+            setBusy(true);
+            const payload = await apiRequest('/api/auth/login', {
+              method: 'POST',
+              body: JSON.stringify({ email, password }),
+            });
+            const newToken = payload?.token;
+            localStorage.setItem('copyshark_token', newToken);
+            setToken(newToken);
+            notify('success', 'Welcome back! Let\'s get some copy moving.', 'Logged in');
+          } catch (error) {
+            notify('error', error.message || 'Unable to login', 'Authentication failed');
+          } finally {
+            setBusy(false);
+          }
+        };
+
+        const handleRegister = async ({ email, password }) => {
+          try {
+            setBusy(true);
+            await apiRequest('/api/auth/register', {
+              method: 'POST',
+              body: JSON.stringify({ email, password }),
+            });
+            notify('success', 'Registration complete! Sign in and we\'ll set up your workspace.', 'Registered');
+            await delay(400);
+            handleLogin({ email, password });
+          } catch (error) {
+            notify('error', error.message || 'Registration failed');
+          } finally {
+            setBusy(false);
+          }
+        };
+
+        const handleLogout = () => {
+          localStorage.removeItem('copyshark_token');
+          setToken(null);
+          setStatus({ type: 'info', message: 'Come back any time. Your brand memories are safe.', heading: 'Logged out' });
+        };
+
+        const handleCreateBrand = async (payload, onSuccess) => {
+          try {
+            setBusy(true);
+            const response = await apiRequest('/api/brands', {
+              method: 'POST',
+              body: JSON.stringify(payload),
+            });
+            const updated = [...brands, response.brand];
+            setBrands(updated);
+            setSelectedBrand(response.brand);
+            onSuccess?.();
+            notify('success', 'New brand saved. Prompts will tap into it right away.', 'Brand added');
+          } catch (error) {
+            notify('error', error.message, 'Unable to save brand');
+          } finally {
+            setBusy(false);
+          }
+        };
+
+        const handleSelectBrand = (brand) => {
+          setSelectedBrand(brand);
+        };
+
+        const handleEditBrand = (brand) => {
+          setBrandSettingsModal(brand);
+        };
+
+        const handleUpdateBrand = async (brandId, updates) => {
+          try {
+            setBusy(true);
+            const response = await apiRequest(`/api/brands/${brandId}`, {
+              method: 'PATCH',
+              body: JSON.stringify(updates),
+            });
+            const updated = response.brand || { ...brands.find(b => b.id === brandId), ...updates };
+            setBrands(brands.map(b => b.id === brandId ? updated : b));
+            if (selectedBrand?.id === brandId) {
+              setSelectedBrand(updated);
+            }
+            setBrandSettingsModal(null);
+            notify('success', 'Brand profile updated. Fresh context locked in.', 'Brand updated');
+          } catch (error) {
+            notify('error', error.message, 'Unable to update brand');
+          } finally {
+            setBusy(false);
+          }
+        };
+
+        const handleDeleteBrand = async (brandId) => {
+          try {
+            setBusy(true);
+            await apiRequest(`/api/brands/${brandId}`, {
+              method: 'DELETE',
+            });
+            setBrands(brands.filter(b => b.id !== brandId));
+            if (selectedBrand?.id === brandId) {
+              setSelectedBrand(brands.find(b => b.id !== brandId) || null);
+            }
+            setBrandSettingsModal(null);
+            notify('success', 'Brand and all its campaigns archived.', 'Brand deleted');
+          } catch (error) {
+            notify('error', error.message, 'Unable to delete brand');
+          } finally {
+            setBusy(false);
+          }
+        };
+
+        const handleCreateProject = async (payload, onSuccess) => {
+          try {
+            setBusy(true);
+            const response = await apiRequest(`/api/brands/${payload.brandId}/projects`, {
+              method: 'POST',
+              body: JSON.stringify(payload),
+            });
+            const updated = [...projects, response.project];
+            setProjects(updated);
+            setSelectedProject(response.project);
+            onSuccess?.();
+            notify('success', 'New campaign workspace created.', 'Project ready');
+          } catch (error) {
+            notify('error', error.message, 'Unable to create project');
+          } finally {
+            setBusy(false);
+          }
+        };
+
+        const handleSelectProject = (project) => {
+          setSelectedProject(project);
+        };
+
+        const handleGraphRefresh = useCallback(async () => {
+          if (!selectedBrand || !graphStatus.enabled) return;
+          const queryValue = graphQuery || selectedBrand.name || '';
+          await fetchGraphInsights(selectedBrand.id, queryValue);
+        }, [selectedBrand, graphStatus.enabled, graphQuery, fetchGraphInsights]);
+
+        const handleGenerateVariants = async (form) => {
+          if (!selectedProject) return;
+          try {
+            setBusy(true);
+            const body = {
+              ...form,
+              variantCount: Number(form.variantCount) || 1,
+              nicheId: selectedProject.nicheId,
+              frameworkId: selectedProject.frameworkId,
+            };
+            const response = await apiRequest(`/api/projects/${selectedProject.id}/generate`, {
+              method: 'POST',
+              body: JSON.stringify(body),
+            });
+            const fresh = response.variants?.map((entry) => entry.variant) || [];
+            setVariants((prev) => [...fresh, ...prev]);
+            notify('success', 'Just dropped fresh copy into your campaign.', 'Variants ready');
+            setUsage((prev) => ({ ...prev, usage: prev.usage + fresh.length }));
+            if (graphStatus.enabled && selectedBrand) {
+              const queryValue = graphQuery || selectedBrand.name || '';
+              fetchGraphInsights(selectedBrand.id, queryValue);
+            }
+          } catch (error) {
+            notify('error', error.message, 'Could not generate copy');
+          } finally {
+            setBusy(false);
+          }
+        };
+
+        const handleFavorite = async (variant) => {
+          try {
+            await apiRequest(`/api/variants/${variant.id}/favorite`, {
+              method: 'POST',
+              body: JSON.stringify({ isFavorite: !variant.isFavorite }),
+            });
+            setVariants((prev) =>
+              prev.map((item) =>
+                item.id === variant.id
+                  ? { ...item, isFavorite: !variant.isFavorite }
+                  : item
+              )
+            );
+            notify('success', !variant.isFavorite ? 'Saved to your highlight reel.' : 'Removed from favorites.', 'Favorites updated');
+          } catch (error) {
+            notify('error', error.message, 'Could not update favorite');
+          }
+        };
+
+        const exportVariant = async (variant, mode) => {
+          const markdown = `# ${variant.headline || 'Untitled copy'}\n\n${variant.body || ''}\n\n**CTA**: ${variant.cta || ''}`;
+          if (mode === 'clipboard' && navigator.clipboard?.writeText) {
+            try {
+              await navigator.clipboard.writeText(markdown);
+              notify('success', 'Copied to clipboard. Share away!', 'Copied');
+            } catch (error) {
+              notify('error', 'Could not copy to clipboard');
+            }
+            return;
+          }
+          const blob = new Blob([markdown], { type: 'text/markdown' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${(variant.headline || 'copy').toLowerCase().replace(/\s+/g, '-')}.md`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          notify('success', 'Markdown downloaded. Ready for your doc set.', 'Exported');
+        };
+
+        const handleFeedback = async (variant) => {
+          setFeedbackModal(variant);
+        };
+
+        const handleEditVariant = (variant) => {
+          setVariantEditorModal(variant);
+        };
+
+        const handleUpdateVariant = async (variantId, updates) => {
+          try {
+            setBusy(true);
+            const response = await apiRequest(`/api/variants/${variantId}`, {
+              method: 'PATCH',
+              body: JSON.stringify(updates),
+            });
+            const updated = response.variant || { ...variants.find(v => v.id === variantId), ...updates };
+            setVariants(variants.map(v => v.id === variantId ? updated : v));
+            setVariantEditorModal(null);
+            notify('success', 'Variant updated. Refreshed copy locked in.', 'Variant saved');
+          } catch (error) {
+            notify('error', error.message, 'Unable to update variant');
+          } finally {
+            setBusy(false);
+          }
+        };
+
+        const handleViewFeedbackHistory = async (variant) => {
+          setFeedbackHistoryModal(variant);
+          setFeedbackHistory([]);
+          try {
+            setFeedbackLoading(true);
+            const response = await apiRequest(`/api/variants/${variant.id}/feedback`);
+            setFeedbackHistory(response.feedback || []);
+          } catch (error) {
+            notify('error', error.message, 'Unable to load feedback history');
+            setFeedbackHistory([]);
+          } finally {
+            setFeedbackLoading(false);
+          }
+        };
+
+        const handleSubmitFeedback = async ({ rating, notes }) => {
+          if (!feedbackModal) return;
+          try {
+            setBusy(true);
+            await apiRequest(`/api/variants/${feedbackModal.id}/feedback`, {
+              method: 'POST',
+              body: JSON.stringify({ rating, notes }),
+            });
+            notify('success', 'Appreciate the intel! We\'ll feed it into the graph.', 'Feedback saved');
+            setFeedbackModal(null);
+            handleGraphRefresh();
+          } catch (error) {
+            notify('error', error.message, 'Could not save feedback');
+          } finally {
+            setBusy(false);
+          }
+        };
+
+        const usagePercent = useMemo(() => {
+          if (!usage.limit || usage.limit === Infinity) return '∞';
+          const ratio = Math.min(usage.usage / usage.limit, 1);
+          return `${Math.round(ratio * 100)}%`;
+        }, [usage]);
+
+        const usageBarWidth = useMemo(() => {
+          if (!usage.limit || usage.limit === Infinity) return '100%';
+          return `${Math.min((usage.usage / usage.limit) * 100, 100)}%`;
+        }, [usage]);
+
+        return (
+          <div className="app-shell">
+            <Announcement status={status} onDismiss={() => setStatus(null)} />
+
+            {!token && (
+              <AuthPanel onLogin={handleLogin} onRegister={handleRegister} busy={busy} />
+            )}
+
+            {token && (
+              <>
+                <div className="panel">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                    <div>
+                      <h1>🦈 CopyShark Command Deck</h1>
+                      <p className="conversation-note">{conversationPrompt}</p>
+                    </div>
+                    <div className="stack" style={{ alignItems: 'flex-end' }}>
+                      <div className="chips">
+                        <span className="chip">{user?.email || 'unknown'}</span>
+                        <span className="chip">Plan · {usage.plan}</span>
+                      </div>
+                      <button className="btn-ghost" onClick={handleLogout}>
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span>
+                        Usage · {usage.usage} / {usage.limit === Infinity ? '∞' : usage.limit}
+                      </span>
+                      <span>{usagePercent}</span>
+                    </div>
+                    <div className="usage-bar" style={{ background: 'rgba(148, 163, 184, 0.25)', height: '10px', borderRadius: '999px' }}>
+                      <div
+                        style={{
+                          width: usageBarWidth,
+                          height: '100%',
+                          borderRadius: '999px',
+                          background: 'linear-gradient(90deg, rgba(96,165,250,0.6), rgba(56,189,248,0.85))',
+                          transition: 'width 0.3s ease',
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="workspace">
+                  <BrandBoard
+                    brands={brands}
+                    selectedBrand={selectedBrand}
+                    onSelect={handleSelectBrand}
+                    onCreate={handleCreateBrand}
+                    onEdit={handleEditBrand}
+                    busy={busy}
+                  />
+                  {brandSettingsModal && (
+                    <BrandSettingsModal
+                      brand={brandSettingsModal}
+                      onUpdate={handleUpdateBrand}
+                      onDelete={handleDeleteBrand}
+                      onClose={() => setBrandSettingsModal(null)}
+                      busy={busy}
+                    />
+                  )}
+                  <ProjectBoard
+                    brand={selectedBrand}
+                    projects={projects}
+                    selectedProject={selectedProject}
+                    onSelect={handleSelectProject}
+                    onCreate={handleCreateProject}
+                    taxonomy={taxonomy}
+                    busy={busy}
+                  />
+                  <div className="stack">
+                    <VariantBoard
+                      project={selectedProject}
+                      variants={variants}
+                      onGenerate={handleGenerateVariants}
+                      onFavorite={handleFavorite}
+                      onExport={exportVariant}
+                      onFeedback={handleFeedback}
+                      onEdit={handleEditVariant}
+                      onViewHistory={handleViewFeedbackHistory}
+                      taxonomy={taxonomy}
+                      models={models}
+                      busy={busy}
+                    />
+                    <KnowledgeGraphPanel
+                      enabled={graphStatus.enabled}
+                      loading={graphLoading}
+                      error={graphError}
+                      insights={graphInsights}
+                      query={graphQuery}
+                      onQueryChange={setGraphQuery}
+                      onRefresh={handleGraphRefresh}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+            {variantEditorModal && (
+              <VariantEditorModal
+                variant={variantEditorModal}
+                onSave={handleUpdateVariant}
+                onClose={() => setVariantEditorModal(null)}
+                busy={busy}
+              />
+            )}
+            {feedbackHistoryModal && (
+              <FeedbackHistoryModal
+                variant={feedbackHistoryModal}
+                feedback={feedbackHistory}
+                loading={feedbackLoading}
+                onClose={() => {
+                  setFeedbackHistoryModal(null);
+                  setFeedbackHistory([]);
+                }}
+              />
+            )}
+            {feedbackModal && (
+              <FeedbackModal
+                variant={feedbackModal}
+                onClose={() => setFeedbackModal(null)}
+                onSubmit={handleSubmitFeedback}
+              />
+            )}
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  </body>
+</html>

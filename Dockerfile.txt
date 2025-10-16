@@ -13,8 +13,8 @@ RUN npm install --omit=dev
 # Bundle app source
 COPY . .
 
-# Your app binds to port 3000, but Heroku will map it to 80/443 automatically
-EXPOSE 3000
+# Your app binds to port 4000, but Heroku will map it to 80/443 automatically
+EXPOSE 4000
 
 # Define the command to run your app
 CMD [ "node", "backend/server.js" ]

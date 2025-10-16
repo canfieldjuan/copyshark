@@ -1,0 +1,1 @@
+module.exports = { aida: { name: 'AIDA', description: 'Attention, Interest, Desire, Action' }, pas: { name: 'PAS', description: 'Problem-Agitate-Solution' }};

@@ -22,6 +22,8 @@
         .result-card p { margin: 0; white-space: pre-wrap; }
         [hidden] { display: none !important; }
         .status { text-align: center; padding: 10px; background: #e8f5e8; border-radius: 8px; margin-bottom: 20px; color: #2d5016; }
+        .helper { margin-top: 8px; font-size: 13px; color: var(--gray-700); }
+        .helper strong { color: var(--primary-dark); }
     </style>
 </head>
 <body>
@@ -47,6 +49,7 @@
                         <option value="saas">SaaS</option>
                         <option value="general">General</option>
                     </select>
+                    <p id="niche-description" class="helper" hidden></p>
                 </div>
                 <div class="form-group">
                     <label for="framework">Framework</label>
@@ -54,6 +57,15 @@
                         <option value="aida">AIDA (Attention, Interest, Desire, Action)</option>
                         <option value="pas">PAS (Problem-Agitate-Solution)</option>
                     </select>
+                    <p id="framework-description" class="helper" hidden></p>
+                </div>
+                <div class="form-group">
+                    <label for="model">Model</label>
+                    <select id="model" required>
+                        <option value="gpt-4o-mini" data-description="Fast, cost-effective JSON compliant model.">GPT-4o mini</option>
+                        <option value="gpt-4o" data-description="Production-grade reasoning with high quality output.">GPT-4o</option>
+                    </select>
+                    <p id="model-description" class="helper" hidden></p>
                 </div>
                 <div class="form-group">
                     <label for="tone">Tone</label>
@@ -77,34 +89,49 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('generator-form');
             const generateBtn = document.getElementById('generate-btn');
             const resultsPanel = document.getElementById('results-panel');
             const resultsDisplay = document.getElementById('results-display');
-            
-            document.getElementById('generator-form').addEventListener('submit', handleGenerateCopy);
-            
-            async function handleGenerateCopy(e) {
-                e.preventDefault();
+            const productInput = document.getElementById('productName');
+            const audienceInput = document.getElementById('audience');
+            const nicheSelect = document.getElementById('niche');
+            const frameworkSelect = document.getElementById('framework');
+            const modelSelect = document.getElementById('model');
+            const toneSelect = document.getElementById('tone');
+            const statusBanner = document.querySelector('.status');
+            const defaultStatusText = statusBanner ? statusBanner.textContent : '';
+            const fallbackNicheOptions = snapshotOptions(nicheSelect);
+            const fallbackFrameworkOptions = snapshotOptions(frameworkSelect);
+            const fallbackModelOptions = snapshotOptions(modelSelect);
+
+            form.addEventListener('submit', handleGenerateCopy);
+            warmTaxonomy();
+            loadModels();
+
+            async function handleGenerateCopy(event) {
+                event.preventDefault();
                 generateBtn.disabled = true;
                 generateBtn.textContent = 'Generating...';
-                
-                const body = {
-                    productName: document.getElementById('productName').value,
-                    audience: document.getElementById('audience').value,
-                    niche: document.getElementById('niche').value,
-                    framework: document.getElementById('framework').value,
-                    tone: document.getElementById('tone').value,
+
+                const payload = {
+                    productName: productInput.value,
+                    audience: audienceInput.value,
+                    niche: nicheSelect.value,
+                    framework: frameworkSelect.value,
+                    model: modelSelect.value,
+                    tone: toneSelect.value,
                 };
-                
+
                 try {
                     const response = await fetch('/api/generate-copy', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(body)
+                        body: JSON.stringify(payload)
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         displayResults(data.copy);
                     } else {
@@ -113,11 +140,11 @@
                 } catch (error) {
                     alert(`Error: ${error.message}`);
                 }
-                
+
                 generateBtn.disabled = false;
                 generateBtn.textContent = 'Generate Copy';
             }
-            
+
             function displayResults(copy) {
                 resultsDisplay.innerHTML = `
                     <div class="result-card">
@@ -135,6 +162,152 @@
                 `;
                 resultsPanel.hidden = false;
             }
+
+            function snapshotOptions(select) {
+                return Array.from(select.options).map((option) => ({
+                    value: option.value,
+                    label: option.textContent,
+                    description: option.dataset.description || '',
+                }));
+            }
+
+            function renderOptions(select, options) {
+                const previousValue = select.value;
+                select.innerHTML = '';
+                for (const optionData of options) {
+                    const option = document.createElement('option');
+                    option.value = optionData.value;
+                    option.textContent = optionData.label;
+                    if (optionData.description) {
+                        option.dataset.description = optionData.description;
+                    }
+                    select.appendChild(option);
+                }
+                if (options.some((option) => option.value === previousValue)) {
+                    select.value = previousValue;
+                }
+            }
+
+            async function warmTaxonomy() {
+                if (statusBanner) statusBanner.textContent = 'Loading available niches and frameworks...';
+                let nicheOptions = fallbackNicheOptions;
+                let frameworkOptions = fallbackFrameworkOptions;
+                try {
+                    const [nichePayload, frameworkPayload] = await Promise.all([
+                        fetchTaxonomy('/api/niches'),
+                        fetchTaxonomy('/api/frameworks'),
+                    ]);
+                    const resolvedNiches = normalizeTaxonomy(nichePayload);
+                    const resolvedFrameworks = normalizeTaxonomy(frameworkPayload);
+                    if (resolvedNiches.length) {
+                        nicheOptions = buildNicheOptions(resolvedNiches);
+                    }
+                    if (resolvedFrameworks.length) {
+                        frameworkOptions = buildFrameworkOptions(resolvedFrameworks);
+                    }
+                    if (statusBanner) statusBanner.textContent = defaultStatusText;
+                } catch (error) {
+                    console.error('Failed to load taxonomy data', error);
+                    if (statusBanner) statusBanner.textContent = 'Loaded with fallback taxonomy options.';
+                }
+                renderOptions(nicheSelect, nicheOptions);
+                renderOptions(frameworkSelect, frameworkOptions);
+                updateNicheDescription();
+                updateFrameworkDescription();
+            }
+
+            async function loadModels() {
+                let modelOptions = fallbackModelOptions;
+                try {
+                    const response = await fetch('/api/models');
+                    if (!response.ok) {
+                        throw new Error(`Request failed (${response.status})`);
+                    }
+                    const data = await response.json();
+                    if (Array.isArray(data.models) && data.models.length) {
+                        modelOptions = data.models.map((item) => ({
+                            value: item.id,
+                            label: item.label || item.id,
+                            description: item.description || ''
+                        }));
+                        if (statusBanner) {
+                            statusBanner.textContent = `LLM Provider: ${String(data.provider || 'openai').toUpperCase()}`;
+                        }
+                    } else if (statusBanner) {
+                        statusBanner.textContent = defaultStatusText;
+                    }
+                } catch (error) {
+                    console.error('Failed to load models', error);
+                    if (statusBanner) statusBanner.textContent = 'Loaded with fallback taxonomy options.';
+                }
+                renderOptions(modelSelect, modelOptions);
+                updateModelDescription();
+            }
+
+            async function fetchTaxonomy(url) {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Request failed (${response.status})`);
+                }
+                return response.json();
+            }
+
+            function normalizeTaxonomy(payload) {
+                if (Array.isArray(payload)) {
+                    return payload;
+                }
+                if (payload && typeof payload === 'object') {
+                    return Object.values(payload);
+                }
+                return [];
+            }
+
+            function buildNicheOptions(records) {
+                return records.map((item) => ({
+                    value: item.id,
+                    label: item.name,
+                    description: item.description || '',
+                }));
+            }
+
+            function buildFrameworkOptions(records) {
+                return records.map((item) => ({
+                    value: item.id,
+                    label: item.name,
+                    description: item.description || '',
+                }));
+            }
+
+            function updateNicheDescription() {
+                const helper = document.getElementById('niche-description');
+                const activeOption = nicheSelect.options[nicheSelect.selectedIndex];
+                if (!helper || !activeOption) return;
+                const description = activeOption.dataset.description || '';
+                helper.textContent = description;
+                helper.hidden = description.length === 0;
+            }
+
+            function updateFrameworkDescription() {
+                const helper = document.getElementById('framework-description');
+                const activeOption = frameworkSelect.options[frameworkSelect.selectedIndex];
+                if (!helper || !activeOption) return;
+                const description = activeOption.dataset.description || '';
+                helper.textContent = description;
+                helper.hidden = description.length === 0;
+            }
+
+            function updateModelDescription() {
+                const helper = document.getElementById('model-description');
+                const activeOption = modelSelect.options[modelSelect.selectedIndex];
+                if (!helper || !activeOption) return;
+                const description = activeOption.dataset.description || '';
+                helper.textContent = description;
+                helper.hidden = description.length === 0;
+            }
+
+            nicheSelect.addEventListener('change', updateNicheDescription);
+            frameworkSelect.addEventListener('change', updateFrameworkDescription);
+            modelSelect.addEventListener('change', updateModelDescription);
         });
     </script>
 </body>
